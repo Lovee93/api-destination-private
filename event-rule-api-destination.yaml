@@ -1,0 +1,110 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: API destination for a private endpoint in an internal service 
+
+Parameters:
+  paramServiceName:
+    Type: String
+  paramEvent: 
+    Type: String
+    Description: "The event to filter events for your service"
+  paramEventBusName:
+    Type: String
+    Description: "The name of the EventBridge event bus"
+  paramEventPattern:
+    Type: String
+    Description: "The event pattern to filter events for your service"
+  paramInvocationEndpoint:
+    Type: String
+    Description: "The private endpoint to invoke"
+  DeadLetterQueueArn:
+    Type: String
+    Description: "The ARN of the dead-letter queue"
+  paramConnectionApiKey:
+    Type: String
+    Description: "The API key to use for the connection"
+    NoEcho: true
+    MinLength: '1'
+    MaxLength: '512'
+    AllowedPattern: ^[ \t]*[^\x00-\x1F:\x7F]+([ \t]+[^\x00-\x1F:\x7F]+)*[ \t]*$
+  paramVpcLatticeResourceConfigurationArn:
+    Type: String
+    Description: "The ARN of the VPC Lattice resource configuration created in the other stack"
+
+Resources:
+  SomeEventBridgeRule:
+    Type: AWS::Events::Rule
+    Properties: 
+      Name: !Sub "${paramServiceName}-${paramEvent}-event-rule"
+      Description: "Rule to capture some kind of events"
+      EventBusName: !Ref paramEventBusName
+      EventPattern: !Ref paramEventPattern
+      State: "ENABLED"
+      Targets: 
+        - Arn: !GetAtt ApiDestination.Arn
+          Id: !Sub "${paramEvent}-api-destination"
+          RoleArn: !GetAtt EventBridgeInvokeApiDestinationRole.Arn
+          InputTransformer:
+            InputPathsMap:
+              id: $.detail.payload.organisation.id
+              name: $.detail.payload.organisation.name
+            InputTemplate: |-
+              {
+                "org": {
+                  "organisation": {
+                    "id": <id>,
+                    "name": <name>
+                  }
+                }
+              }
+          DeadLetterConfig:
+            Arn: !Ref DeadLetterQueueArn
+
+  ApiDestination:
+    Type: AWS::Events::ApiDestination
+    Properties:
+      Name: !Sub "${paramServiceName}-${paramEvent}-api-destination"
+      Description: "API destination for some kind of events"
+      ConnectionArn:
+        Fn::GetAtt: [ApiConnection, Arn]  
+      InvocationEndpoint: !Ref paramInvocationEndpoint
+      HttpMethod: "POST" 
+      InvocationRateLimitPerSecond: 100
+
+  ApiConnection:
+    Type: AWS::Events::Connection
+    Properties:
+      Name: !Sub "${paramServiceName}-api-connection"
+      AuthorizationType: "API_KEY"
+      AuthParameters:
+        ApiKeyAuthParameters: # You can also configure other types of authentication
+          ApiKeyName: "api_key"
+          ApiKeyValue: !Ref paramConnectionApiKey
+      InvocationConnectivityParameters:
+        ResourceParameters:
+          ResourceConfigurationArn: !Ref paramVpcLatticeResourceConfigurationArn
+
+  EventBridgeInvokeApiDestinationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: "events.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: "InvokeApiDestinationPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "events:InvokeApiDestination"
+                Resource: 
+                  - !GetAtt ApiDestination.Arn
+
+Outputs:
+  ApiDestination:
+    Description: The ARN of the created API destination.
+    Value: !GetAtt ApiDestination.Arn

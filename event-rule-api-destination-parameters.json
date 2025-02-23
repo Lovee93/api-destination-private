@@ -1,0 +1,34 @@
+[
+  {
+    "ParameterKey": "paramServiceName",
+    "ParameterValue": "my-service"
+  },
+  {
+    "ParameterKey": "paramEventBusName",
+    "ParameterValue": "default"
+  },
+  {
+    "ParameterKey": "paramEvent",
+    "ParameterValue": "testSync"
+  },
+  {
+    "ParameterKey": "paramEventPattern",
+    "ParameterValue": "{\"detail\": {\"event-type\": [\"TestSyncUpdate\"]}}"
+  },
+  {
+    "ParameterKey": "paramInvocationEndpoint",
+    "ParameterValue": "https://myinternalservice.com/endpoint"
+  },
+  {
+    "ParameterKey": "DeadLetterQueueArn",
+    "ParameterValue": "arn:aws:sqs:region:accountId:some-dlq"
+  },
+  {
+    "ParameterKey": "paramConnectionApiKey",
+    "ParameterValue": "test"
+  },
+  {
+    "ParameterKey": "paramVpcLatticeResourceConfigurationArn",
+    "ParameterValue": "VpcLatticeResourceConfigArn"
+  }
+]

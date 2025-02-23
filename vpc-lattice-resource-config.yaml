@@ -1,0 +1,46 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for VPC Lattice Resource Configuration'
+
+Parameters:
+  paramServiceName:
+    Type: String
+  paramVpcId:
+    Type: String
+  paramPrivateSubnetIds:
+    Type: String
+  paramDomainName:
+    Type: String
+  paramDefaultSecurityGroup:
+    Type: String
+
+Resources:
+  VpcLatticeResourceGateway:
+    Type: AWS::VpcLattice::ResourceGateway
+    Properties:
+      IpAddressType: IPV4
+      Name: !Sub "${paramServiceName}-rg"
+      SecurityGroupIds: 
+        - !Ref paramDefaultSecurityGroup
+      SubnetIds: !Split [',', !Ref paramPrivateSubnetIds]
+      VpcIdentifier: !Ref paramVpcId
+
+  VPCLatticeResourceConfig:
+    Type: AWS::VpcLattice::ResourceConfiguration
+    Properties:
+      Name: !Sub "${paramServiceName}-rc"
+      ResourceGatewayId: !Ref VpcLatticeResourceGateway
+      ResourceConfigurationType: 'SINGLE'
+      ProtocolType: 'TCP'
+      PortRanges: 
+        - '80'
+        - '443'
+      ResourceConfigurationDefinition:
+        DnsResource:
+          DomainName: !Ref paramDomainName
+          IpAddressType: 'IPV4'
+      AllowAssociationToSharableServiceNetwork: true
+
+Outputs:
+  VpcLatticeResourceConfigArn:
+    Description: The ARN of the created VPC Lattice Resource Configuration.
+    Value: !GetAtt VPCLatticeResourceConfig.Arn

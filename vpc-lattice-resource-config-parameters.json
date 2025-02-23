@@ -1,0 +1,22 @@
+[
+  {
+    "ParameterKey": "paramServiceName",
+    "ParameterValue": "my-service"
+  },
+  {
+    "ParameterKey": "paramVpcId",
+    "ParameterValue": "vpc-1234567890"
+  },
+  {
+    "ParameterKey": "paramPrivateSubnetIds",
+    "ParameterValue": "subnet-1234567890,subnet-1234567890"
+  },
+  {
+    "ParameterKey": "paramDomainName",
+    "ParameterValue": "myinternalervice.com"
+  },
+  {
+    "ParameterKey": "paramDefaultSecurityGroup",
+    "ParameterValue": "sg-1234567890"
+  }
+]
